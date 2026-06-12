@@ -1,0 +1,23 @@
+{
+ "name": "大乐透投注账本 PRO",
+ "short_name": "大乐透账本",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#0b1026",
+ "theme_color": "#0b1026",
+ "description": "每期5注 · 真实记录 · 自动核对 · 诚实概率",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}

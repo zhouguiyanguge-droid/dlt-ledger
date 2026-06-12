@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大乐透投注账本 PRO</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1026">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+--gold:#f6c453;--red:#e84a3c;--red-deep:#b02d23;--blue:#5b9aff;
+--ink:#ecearf5;--text:#e9e6f4;--muted:#9a93b8;--line:rgba(255,255,255,.10);
+--card:rgba(255,255,255,.055);--green:#52d196;--purple:#a78bfa;--amber:#f0a832;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);padding-bottom:80px;
+background:linear-gradient(160deg,#0b1026 0%,#1b1038 45%,#251038 70%,#0b1026 100%);background-attachment:fixed;min-height:100vh;}
+header{padding:38px 20px 26px;text-align:center;position:relative;overflow:hidden;}
+header::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(232,74,60,.35),transparent 60%),radial-gradient(ellipse at 80% 120%,rgba(91,154,255,.18),transparent 55%);pointer-events:none;}
+header h1{font-size:30px;letter-spacing:6px;background:linear-gradient(90deg,#f6c453,#ff8a6e,#f6c453);background-size:200%;
+-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 5s linear infinite;position:relative;}
+@keyframes shimmer{to{background-position:200% 0;}}
+header p{margin-top:8px;font-size:13px;color:var(--muted);position:relative;}
+nav{position:sticky;top:0;z-index:50;display:flex;gap:6px;overflow-x:auto;padding:10px 14px;
+background:rgba(11,16,38,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+nav a{flex:none;font-size:12px;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:20px;border:1px solid var(--line);transition:.2s;}
+nav a:hover{color:var(--gold);border-color:var(--gold);}
+main{max-width:880px;margin:0 auto;padding:16px;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;backdrop-filter:blur(8px);
+box-shadow:0 8px 24px rgba(0,0,0,.25);transition:.25s;}
+.card:hover{transform:translateY(-2px);border-color:rgba(246,196,83,.4);}
+.card .v{font-size:23px;font-weight:700;margin-top:6px;color:var(--gold);}
+.card .l{font-size:12px;color:var(--muted);}
+.neg{color:var(--red)!important;} .pos{color:var(--green)!important;}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;backdrop-filter:blur(8px);
+box-shadow:0 8px 24px rgba(0,0,0,.25);animation:fadeUp .5s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+section h2{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#fff;}
+section h2::before{content:"";width:4px;height:16px;background:linear-gradient(var(--gold),var(--red));border-radius:2px;display:inline-block;}
+.ball{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;margin:2px;
+box-shadow:0 3px 8px rgba(0,0,0,.4),inset 0 -3px 6px rgba(0,0,0,.3),inset 0 3px 6px rgba(255,255,255,.35);}
+.f{background:radial-gradient(circle at 32% 28%,#ff9d8a,#e84a3c 55%,#8f1d14);}
+.b{background:radial-gradient(circle at 32% 28%,#9dc4ff,#3d7be8 55%,#123e80);}
+.bet-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:10px 0;border-bottom:1px dashed var(--line);}
+.bet-row:last-child{border-bottom:none;}
+.bet-idx{font-weight:700;color:var(--gold);min-width:44px;}
+.sep{color:var(--muted);margin:0 2px;}
+button{border:none;border-radius:10px;padding:8px 16px;font-size:13px;cursor:pointer;color:#fff;font-weight:600;
+background:linear-gradient(135deg,#e84a3c,#b02d23);box-shadow:0 4px 12px rgba(232,74,60,.35);transition:.2s;}
+button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(232,74,60,.5);}
+button.ghost{background:rgba(255,255,255,.08);box-shadow:none;color:var(--text);border:1px solid var(--line);}
+button.ghost:hover{border-color:var(--gold);color:var(--gold);box-shadow:none;}
+button.sm{padding:5px 11px;font-size:12px;}
+input[type=text],input[type=number],select{border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:14px;
+background:rgba(0,0,0,.25);color:var(--text);outline:none;transition:.2s;}
+input:focus,select:focus{border-color:var(--gold);}
+select option{background:#1b1038;}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0;}
+.hint{font-size:12px;color:var(--muted);line-height:1.8;}
+.hint b{color:#cfc7e8;}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+th,td{border-bottom:1px solid var(--line);padding:9px 6px;text-align:left;vertical-align:top;}
+th{color:var(--muted);font-weight:500;font-size:12px;}
+.win{color:var(--gold);font-weight:700;}
+a{color:var(--blue);text-decoration:none;}
+.honest{border-color:rgba(240,168,50,.35);}
+.honest h2::before{background:var(--amber);}
+.honest p{font-size:13px;line-height:2;}
+.honest b{color:var(--gold);}
+.fun{border-color:rgba(167,139,250,.35);}
+.fun h2::before{background:var(--purple);}
+.gua{font-size:42px;text-align:center;margin:8px 0;color:#fff;text-shadow:0 0 18px rgba(167,139,250,.8);}
+.gua-name{text-align:center;font-size:18px;font-weight:700;color:var(--purple);}
+.tag{display:inline-block;background:rgba(167,139,250,.16);color:var(--purple);font-size:11px;border-radius:8px;padding:3px 9px;font-weight:400;}
+.chip{display:inline-block;font-size:11px;border-radius:8px;padding:3px 9px;font-weight:600;}
+.chip.ok{background:rgba(82,209,150,.15);color:var(--green);}
+.chip.bad{background:rgba(232,74,60,.18);color:#ff8a7d;}
+.warn{background:rgba(232,74,60,.12);border:1px solid rgba(232,74,60,.35);border-radius:10px;padding:11px 13px;font-size:12px;color:#ffb3a8;line-height:1.9;margin-top:10px;}
+.bar{height:14px;background:rgba(255,255,255,.08);border-radius:7px;overflow:hidden;margin:8px 0;}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#52d196,#2fa872);transition:width .4s;border-radius:7px;}
+.bar i.w80{background:linear-gradient(90deg,#f0a832,#d98a13);} .bar i.over{background:linear-gradient(90deg,#e84a3c,#b02d23);}
+.flag{display:inline-block;background:rgba(232,74,60,.14);color:#ff9d8f;font-size:11px;border-radius:7px;padding:3px 9px;margin:2px 4px 2px 0;}
+.okflag{display:inline-block;background:rgba(82,209,150,.14);color:var(--green);font-size:11px;border-radius:7px;padding:3px 9px;margin:2px 4px 2px 0;}
+.simbox{background:rgba(82,209,150,.08);border:1px solid rgba(82,209,150,.3);border-radius:10px;padding:11px 13px;margin-top:10px;font-size:13px;line-height:2;}
+.simbox b{color:var(--gold);}
+footer{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;line-height:2;}
+/* 弹层与吐司（替代被浏览器拦截的系统弹窗） */
+.ovl{position:fixed;inset:0;background:rgba(5,8,20,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;animation:fadeUp .18s ease;}
+.panel{background:#1d1535;border:1px solid rgba(246,196,83,.3);border-radius:16px;padding:22px;max-width:420px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:80vh;overflow:auto;}
+.panel p{font-size:14px;line-height:1.9;margin-bottom:14px;}
+.pbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+.pickopt{display:block;width:100%;text-align:left;margin:6px 0;background:rgba(255,255,255,.07);box-shadow:none;border:1px solid var(--line);}
+.pickopt:hover{border-color:var(--gold);}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:110;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{background:#241a44;border:1px solid rgba(246,196,83,.45);color:var(--text);font-size:13px;border-radius:12px;padding:10px 18px;
+box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
+.toast.warn2{border-color:rgba(232,74,60,.6);}
+.toast.out{opacity:0;transition:.4s;}
+.cf{position:fixed;top:-14px;width:8px;height:14px;z-index:98;border-radius:2px;animation:fall 2.8s linear forwards;pointer-events:none;}
+@keyframes fall{to{transform:translateY(108vh) rotate(720deg);opacity:.15;}}
+@media(max-width:520px){.ball{width:27px;height:27px;font-size:12px;}header h1{font-size:24px;letter-spacing:3px;}}
+</style>
+</head>
+<body>
+<header>
+<h1>大乐透投注账本 PRO</h1>
+<p>每期5注 · 真实记录 · 自动核对 · 诚实概率 —— 中奖以官方开奖为准</p>
+</header>
+<nav>
+<a href="#sec-budget">预算</a><a href="#sec-bets">我的5注</a><a href="#sec-draw">录开奖</a><a href="#sec-his">记录</a>
+<a href="#sec-honest">概率</a><a href="#sec-check">体检</a><a href="#sec-sim">模拟器</a><a href="#sec-lab">实验室</a><a href="#sec-photo">存档</a>
+</nav>
+<main>
+
+<div class="cards">
+<div class="card"><div class="l">累计投入</div><div class="v" id="stCost">0 元</div></div>
+<div class="card"><div class="l">累计中奖</div><div class="v" id="stWin">0 元</div></div>
+<div class="card"><div class="l">净盈亏</div><div class="v" id="stNet">0 元</div></div>
+<div class="card"><div class="l">回收率</div><div class="v" id="stRate">—</div></div>
+</div>
+
+<section id="sec-budget">
+<h2>预算与止损</h2>
+<div class="row">
+<span class="hint">年度预算上限：</span>
+<input type="number" id="budget" style="width:120px" onchange="setBudget(this.value)">
+<span class="hint">元</span>
+<span class="hint" id="budgetMsg"></span>
+</div>
+<div class="bar"><i id="budgetBar" style="width:0%"></i></div>
+<p class="hint" id="budgetDetail"></p>
+</section>
+
+<section id="sec-bets">
+<h2>我的号码 <span class="chip" id="betChip">5/5</span></h2>
+<div id="betList"></div>
+<div class="row">
+<button class="ghost sm" onclick="addBet()">＋ 添加一注</button>
+<span class="hint">每注单价：</span>
+<select id="unitPrice" onchange="saveState();renderAll()">
+<option value="3">3 元（追加投注）</option>
+<option value="2">2 元（基本投注）</option>
+</select>
+<span class="hint" id="perCost"></span>
+</div>
+<p class="hint">纪律：<b>每期只买5注</b>，工具会锁住上限。「换号」一键机选避热；「编辑」可改号码和选号依据。修改不影响已记录期次。</p>
+<p class="hint"><b>为什么没有"按冷热号/走势自动调号"：</b>每期开奖独立随机，冷热号、遗漏值对下一期没有任何预测力——按它们调号既不增也不减概率，只会制造"在做分析"的错觉。这里的自动更新是「机选避热」：概率不变，但避开大众爱买的组合，中大奖时更不容易被平分。另注意：追号票号码在票面已锁定，想每期换号需放弃追号、逐期购票。</p>
+</section>
+
+<section id="sec-draw">
+<h2>录入开奖结果</h2>
+<div class="row">
+<input type="text" id="dPeriod" placeholder="期号 如 26062" style="width:110px">
+<input type="text" id="dFront" placeholder="前区5个号 如 02 09 17 23 34" style="width:220px">
+<input type="text" id="dBack" placeholder="后区2个号 如 01 07" style="width:130px">
+<button onclick="recordDraw()">核对并记录</button>
+<button class="ghost" onclick="fetchLatest()">⟳ 自动获取开奖</button>
+</div>
+<p class="hint">开奖号以中国体彩官网/官方App为准。一、二等奖为浮动奖金，会弹出输入框让你填官方实际金额（追加票一二等奖另有基本奖金80%的追加部分，填到手总额）。</p>
+</section>
+
+<section id="sec-his">
+<h2>历史记录</h2>
+<div id="history"></div>
+</section>
+
+<section class="honest" id="sec-honest">
+<h2>诚实概率面板（数学说了算）</h2>
+<div id="honest"></div>
+</section>
+
+<section id="sec-check">
+<h2>号码热门度体检（平分风险）</h2>
+<div id="checkup"></div>
+<p class="hint">原理：任何组合中奖概率完全相同，但一、二等奖按中奖注数<b>平分奖池</b>。买的人越多的组合（生日号≤31、连号、等差…），中了大奖反而分得越少。此体检只针对"被平分风险"，与中奖概率无关。</p>
+</section>
+
+<section id="sec-luck">
+<h2>运气体检：理论 vs 实际</h2>
+<div id="luck"></div>
+</section>
+
+<section id="sec-sim">
+<h2>蒙特卡洛模拟器：把你的打法跑上万年</h2>
+<div class="row">
+<span class="hint">模拟</span>
+<input type="number" id="simYears" value="10000" min="1" max="50000" style="width:100px">
+<span class="hint">年（每年156期 × 每期 <span id="simBets">5</span> 注）</span>
+<button onclick="runSim()">开始模拟</button>
+</div>
+<div class="row">
+<span class="hint">浮动奖到手假设（可改）：一等奖</span>
+<input type="number" id="simT1" value="8000000" style="width:120px">
+<span class="hint">元，二等奖</span>
+<input type="number" id="simT2" value="150000" style="width:100px">
+<span class="hint">元</span>
+</div>
+<div id="simOut"></div>
+</section>
+
+<section class="fun" id="sec-lab">
+<h2>选号方法实验室 <span class="tag">四种方法概率完全相同 · 标签会记入每注依据</span></h2>
+<div class="row">
+<button style="background:linear-gradient(135deg,#a78bfa,#7c5fd4)" onclick="shakeGua()">周易摇卦</button>
+<button style="background:linear-gradient(135deg,#5b9aff,#3567c4)" onclick="genFib()">斐波那契数列</button>
+<button style="background:linear-gradient(135deg,#52d196,#2fa872)" onclick="genStat()">统计学·机选避热</button>
+<button class="ghost" onclick="genRand()">纯随机</button>
+<button class="ghost sm" id="adoptBtn" style="display:none" onclick="adoptFun()">把这组号加入我的号码</button>
+</div>
+<div id="funOut"></div>
+<p class="hint">诚实说明：四种方法每注中一等奖概率都是 1/21,425,712，<b>没有高下之分</b>，标签只是帮你记录"这注是怎么来的"。唯一的真实区别在撞车率：<b>统计学·机选避热</b>避开大众热门组合，中大奖被平分的风险最低；<b>斐波那契</b>（1,2,3,5,8,13,21,34）是出了名的大众组合，撞车风险最高；<b>周易摇卦</b>图个仪式感。选哪种是心情问题，不是数学问题。</p>
+</section>
+
+<section id="sec-photo">
+<h2>真实彩票存档</h2>
+<div class="row">
+<input type="text" id="phPeriod" placeholder="期号 如 26062" style="width:110px">
+<input type="file" id="phFile" accept="image/*" style="display:none" onchange="addPhoto(this)">
+<button class="ghost" onclick="document.getElementById('phFile').click()">上传彩票照片</button>
+</div>
+<div id="photoGrid" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px"></div>
+<p class="hint">照片自动压缩存在本机浏览器中，随JSON备份导出导入，点缩略图放大。提示：本工具数据只在你电脑上，Claude看不到——想让我帮你识别票面、核对中奖、更新账本，直接把彩票拍照发到对话里。</p>
+</section>
+
+<section>
+<h2>数据管理</h2>
+<div class="row">
+<button class="ghost" onclick="exportData()">导出备份 (JSON)</button>
+<button class="ghost" onclick="document.getElementById('impFile').click()">导入备份</button>
+<input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
+<button class="ghost" style="color:#ff8a7d" onclick="clearAll()">清空全部数据</button>
+</div>
+<p class="hint">数据仅保存在本机浏览器中（localStorage），换浏览器或清缓存会丢失，建议定期导出备份。</p>
+</section>
+
+<footer>理性购彩 · 量力而行 · 未满18周岁不得购买彩票<br>本工具仅作个人记账与核对参考，中奖以彩票实物及官方核验为准</footer>
+</main>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+const JACKPOT = 21425712; // C(35,5)*C(12,2)
+const MAX_BETS = 5;       // 纪律：每期只买5注
+const TIER_NAME = {1:'一等奖',2:'二等奖',3:'三等奖',4:'四等奖',5:'五等奖',6:'六等奖',7:'七等奖',8:'八等奖',9:'九等奖'};
+const TIER_FIXED = {3:10000,4:3000,5:300,6:200,7:100,8:15,9:5};
+const KEY = 'dlt_ledger_v1';
+
+const DEFAULT_BETS = [
+ {front:[2,9,17,23,34], back:[1,7], note:'票面手选（26062期起追20期）'},
+ {front:[4,11,20,27,31], back:[6,12], note:'票面手选（26062期起追20期）'},
+ {front:[3,8,13,21,34], back:[5,11], note:'票面手选（26062期起追20期）'},
+ {front:[6,17,23,29,30], back:[6,9], note:'票面手选（26062期起追20期）'},
+ {front:[7,14,18,22,29], back:[4,10], note:'票面手选（26062期起追20期）'}
+];
+
+let state = load();
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if(s && Array.isArray(s.bets)) return s;
+  }catch(e){}
+  return {bets: JSON.parse(JSON.stringify(DEFAULT_BETS)), draws: [], unitPrice: 3};
+}
+function saveState(){
+  state.unitPrice = parseInt(document.getElementById('unitPrice').value,10);
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ ui.toast('本机存储已满（多半是照片过多），请导出备份后删除部分照片','warn2'); }
+}
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function balls(arr, cls){ return arr.map(n=>'<span class="ball '+cls+'">'+pad(n)+'</span>').join(''); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+/* ---------- 自带弹层与吐司（不会被浏览器拦截） ---------- */
+const ui = (()=>{
+  function overlay(html){
+    const o = document.createElement('div'); o.className='ovl';
+    o.innerHTML = '<div class="panel">'+html+'</div>';
+    document.body.appendChild(o); return o;
+  }
+  return {
+    toast(msg, cls){
+      const t = document.createElement('div'); t.className='toast '+(cls||''); t.textContent = msg;
+      document.getElementById('toasts').appendChild(t);
+      setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),450); }, 3000);
+    },
+    confirm(msg, okText, cancelText){
+      return new Promise(res=>{
+        const o = overlay('<p>'+msg.replace(/\n/g,'<br>')+'</p><div class="pbtns"><button class="ghost" data-a="no">'+(cancelText||'取消')+'</button><button data-a="ok">'+(okText||'确定')+'</button></div>');
+        o.querySelector('[data-a=ok]').onclick = ()=>{ o.remove(); res(true); };
+        o.querySelector('[data-a=no]').onclick = ()=>{ o.remove(); res(false); };
+      });
+    },
+    prompt(msg, def){
+      return new Promise(res=>{
+        const o = overlay('<p>'+msg.replace(/\n/g,'<br>')+'</p><input type="number" data-a="in" value="'+(def||'0')+'" style="width:100%"><div class="pbtns"><button class="ghost" data-a="no">取消</button><button data-a="ok">确定</button></div>');
+        o.querySelector('[data-a=ok]').onclick = ()=>{ const v=o.querySelector('[data-a=in]').value; o.remove(); res(v); };
+        o.querySelector('[data-a=no]').onclick = ()=>{ o.remove(); res(null); };
+      });
+    },
+    pick(msg, options){
+      return new Promise(res=>{
+        const o = overlay('<p>'+msg+'</p>'+options.map((s,i)=>'<button class="pickopt" data-i="'+i+'">'+s+'</button>').join('')+'<div class="pbtns"><button class="ghost" data-a="no">取消</button></div>');
+        o.querySelectorAll('.pickopt').forEach(b=> b.onclick = ()=>{ const i=+b.dataset.i; o.remove(); res(i); });
+        o.querySelector('[data-a=no]').onclick = ()=>{ o.remove(); res(null); };
+      });
+    }
+  };
+})();
+function confettiFall(){
+  const colors = ['#f6c453','#ff6b5e','#5b9aff','#52d196','#a78bfa'];
+  for(let i=0;i<70;i++){
+    const c = document.createElement('i'); c.className='cf';
+    c.style.left = Math.random()*100+'vw';
+    c.style.background = colors[i%5];
+    c.style.animationDelay = (Math.random()*0.9)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 4000);
+  }
+}
+
+/* ---------- 中奖判定 ---------- */
+function judge(fHit,bHit){
+  if(fHit===5&&bHit===2) return 1;
+  if(fHit===5&&bHit===1) return 2;
+  if(fHit===5&&bHit===0) return 3;
+  if(fHit===4&&bHit===2) return 4;
+  if(fHit===4&&bHit===1) return 5;
+  if(fHit===3&&bHit===2) return 6;
+  if(fHit===4&&bHit===0) return 7;
+  if((fHit===3&&bHit===1)||(fHit===2&&bHit===2)) return 8;
+  if((fHit===3&&bHit===0)||(fHit===1&&bHit===2)||(fHit===2&&bHit===1)||(fHit===0&&bHit===2)) return 9;
+  return 0;
+}
+
+/* ---------- 号码解析与校验 ---------- */
+function parseNums(str, count, max){
+  const arr = (str||'').trim().split(/[\s,，、]+/).filter(Boolean).map(Number);
+  if(arr.length!==count) return null;
+  if(arr.some(n=>!Number.isInteger(n)||n<1||n>max)) return null;
+  if(new Set(arr).size!==count) return null;
+  return arr.sort((a,b)=>a-b);
+}
+function sameBet(a,b){
+  return a.front.join()===b.front.join() && a.back.join()===b.back.join();
+}
+function fmtBet(b){ return b.front.map(pad).join(' ')+' + '+b.back.map(pad).join(' '); }
+
+/* ---------- 我的号码 ---------- */
+let editing = -1;
+function renderBets(){
+  const el = document.getElementById('betList');
+  el.innerHTML = state.bets.map((b,i)=>{
+    if(i===editing){
+      return '<div class="bet-row"><span class="bet-idx">注'+(i+1)+'</span>'+
+      '<input type="text" id="ef" value="'+b.front.map(pad).join(' ')+'" style="width:180px">'+
+      '<input type="text" id="eb" value="'+b.back.map(pad).join(' ')+'" style="width:90px">'+
+      '<input type="text" id="en" value="'+esc(b.note||'')+'" placeholder="选号依据/备注" style="width:200px">'+
+      '<button class="sm" onclick="saveBet('+i+')">保存</button>'+
+      '<button class="ghost sm" onclick="editing=-1;renderBets()">取消</button></div>';
+    }
+    return '<div class="bet-row"><span class="bet-idx">注'+(i+1)+'</span>'+
+      balls(b.front,'f')+'<span class="sep">＋</span>'+balls(b.back,'b')+
+      '<span style="flex:1"></span>'+
+      '<button class="ghost sm" onclick="swapBet('+i+')">换号</button>'+
+      '<button class="ghost sm" onclick="editing='+i+';renderBets()">编辑</button>'+
+      '<button class="ghost sm" onclick="delBet('+i+')">删除</button>'+
+      (b.note?'<div style="flex-basis:100%" class="hint">依据：'+esc(b.note)+'</div>':'')+'</div>';
+  }).join('');
+  document.getElementById('unitPrice').value = String(state.unitPrice||3);
+  const n = state.bets.length, unit = state.unitPrice||3;
+  document.getElementById('perCost').textContent = '每期成本：'+n+'注 × '+unit+'元 = '+(n*unit)+'元';
+  const chip = document.getElementById('betChip');
+  chip.textContent = n+'/'+MAX_BETS+' 注';
+  chip.className = 'chip '+(n===MAX_BETS?'ok':'bad');
+}
+function saveBet(i){
+  const f = parseNums(document.getElementById('ef').value,5,35);
+  const b = parseNums(document.getElementById('eb').value,2,12);
+  if(!f||!b){ ui.toast('号码格式不对：前区5个不重复(1-35)，后区2个不重复(1-12)','warn2'); return; }
+  const nb = {front:f, back:b, note:document.getElementById('en').value.trim()};
+  const dup = state.bets.findIndex((x,j)=> j!==i && sameBet(x,nb));
+  if(dup>=0){ ui.toast('与注'+(dup+1)+'号码完全相同，请勿重复','warn2'); return; }
+  state.bets[i] = nb;
+  editing = -1; saveState(); renderAll();
+  ui.toast('注'+(i+1)+'已保存');
+}
+function addBet(){
+  if(state.bets.length>=MAX_BETS){ ui.toast('纪律：每期只买'+MAX_BETS+'注。想换号请用「换号」或先删除一注','warn2'); return; }
+  state.bets.push({front:[1,2,3,4,5],back:[1,2],note:''});
+  editing = state.bets.length-1; saveState(); renderBets();
+}
+async function delBet(i){
+  if(!(await ui.confirm('删除注'+(i+1)+'？<br>'+fmtBet(state.bets[i])+'<br><span class="hint">不影响已记录的历史期次。</span>','删除','取消'))) return;
+  state.bets.splice(i,1); editing=-1; saveState(); renderAll();
+  ui.toast('已删除，当前'+state.bets.length+'注');
+}
+function machinePick(avoid){
+  let front, tries=0;
+  do{ front = pickUnique(5,35); tries++; }while(avoid && isPopular(front) && tries<50);
+  return {front, back: pickUnique(2,12)};
+}
+async function swapBet(i){
+  if(!(await ui.confirm('为注'+(i+1)+'重新机选一组号码？\n说明：换号不改变中奖概率（任何一组都是1/21,425,712），新号会自动避开生日区/连号等热门组合，降低中大奖时被平分的风险。','换号','取消'))) return;
+  const p = machinePick(true);
+  state.bets[i] = {front:p.front, back:p.back, note:'机选避热 '+new Date().toLocaleDateString('zh-CN')};
+  saveState(); renderAll();
+  ui.toast('注'+(i+1)+'已换为新号');
+}
+
+/* ---------- 录入开奖 ---------- */
+async function recordDraw(){
+  const period = document.getElementById('dPeriod').value.trim();
+  const front = parseNums(document.getElementById('dFront').value,5,35);
+  const back = parseNums(document.getElementById('dBack').value,2,12);
+  if(!period){ ui.toast('请填写期号','warn2'); return; }
+  if(!/^\d{5}$/.test(period)) ui.toast('提示：大乐透期号一般是5位数字，如 26062');
+  if(!front||!back){ ui.toast('开奖号格式不对：前区5个(1-35)，后区2个(1-12)','warn2'); return; }
+  if(state.draws.some(d=>d.period===period)){ ui.toast('第'+period+'期已记录过，如需修改请先删除该期','warn2'); return; }
+  if(state.bets.length===0){ ui.toast('请先添加投注号码','warn2'); return; }
+  if(state.bets.length!==MAX_BETS) ui.toast('注意：当前'+state.bets.length+'注，与每期5注的计划不符');
+
+  const fSet = new Set(front), bSet = new Set(back);
+  const unit = state.unitPrice||3;
+  const results = [];
+  for(let i=0;i<state.bets.length;i++){
+    const bet = state.bets[i];
+    const fHit = bet.front.filter(n=>fSet.has(n)).length;
+    const bHit = bet.back.filter(n=>bSet.has(n)).length;
+    const tier = judge(fHit,bHit);
+    let prize = 0;
+    if(tier>=3) prize = TIER_FIXED[tier];
+    else if(tier===1||tier===2){
+      const v = await ui.prompt('🎉 注'+(i+1)+' 中【'+TIER_NAME[tier]+'】（浮动奖金）！\n请输入官方公布的实际到手奖金（元），追加票含追加部分。可先填0以后再改：','0');
+      prize = Math.max(0, Number(v)||0);
+    }
+    results.push({bet: JSON.parse(JSON.stringify(bet)), fHit, bHit, tier, prize});
+  }
+  const totalWin = results.reduce((s,r)=>s+r.prize,0);
+  state.draws.unshift({period, front, back, cost: state.bets.length*unit, totalWin, results, ts: Date.now()});
+  saveState(); renderAll();
+  document.getElementById('dPeriod').value=''; document.getElementById('dFront').value=''; document.getElementById('dBack').value='';
+  if(totalWin>0){ confettiFall(); ui.toast('🎉 本期共中 '+totalWin+' 元！已记入账本'); }
+  else ui.toast('本期未中奖，已记入账本');
+  if(await ui.confirm('要为下一期把5注全部重新机选（自动避热）吗？\n提醒：①换不换号中奖概率完全相同；②追号票号码已在票面锁定，实际换号需重新购票；③历史记录不受影响。','换一组','保持不变')){
+    state.bets = state.bets.map(()=>{ const p = machinePick(true);
+      return {front:p.front, back:p.back, note:'机选避热（'+period+'期开奖后更新）'}; });
+    saveState(); renderAll();
+    ui.toast('已生成新5注，记得同步更新实际购票');
+  }
+}
+async function delDraw(period){
+  if(!(await ui.confirm('删除第'+period+'期记录？','删除','取消'))) return;
+  state.draws = state.draws.filter(d=>d.period!==period);
+  saveState(); renderAll();
+  ui.toast('已删除第'+period+'期');
+}
+async function editPrize(period, idx){
+  const d = state.draws.find(x=>x.period===period); if(!d) return;
+  const v = await ui.prompt('修改 注'+(idx+1)+' 的奖金（元）：', d.results[idx].prize);
+  if(v===null) return;
+  d.results[idx].prize = Math.max(0, Number(v)||0);
+  d.totalWin = d.results.reduce((s,r)=>s+r.prize,0);
+  saveState(); renderAll();
+}
+
+/* ---------- 历史与统计 ---------- */
+function renderHistory(){
+  const el = document.getElementById('history');
+  if(state.draws.length===0){ el.innerHTML = '<p class="hint">还没有记录。开奖后把官方号码录进来，工具会自动核对你的'+state.bets.length+'注号码。</p>'; return; }
+  el.innerHTML = '<table><tr><th>期号</th><th>开奖号码</th><th>中奖明细</th><th>成本</th><th>中奖</th><th></th></tr>'+
+  state.draws.map(d=>{
+    const detail = d.results.map((r,i)=>{
+      if(r.tier===0) return '';
+      const edit = (r.tier<=2)?' <a href="javascript:void(0)" onclick="editPrize(\''+d.period+'\','+i+')">改金额</a>':'';
+      return '注'+(i+1)+'：'+TIER_NAME[r.tier]+' '+r.prize+'元（中'+r.fHit+'+'+r.bHit+'）'+edit;
+    }).filter(Boolean).join('<br>') || '<span class="hint">未中奖</span>';
+    return '<tr><td>'+d.period+'</td><td>'+balls(d.front,'f')+balls(d.back,'b')+'</td><td>'+detail+'</td>'+
+    '<td>'+d.cost+'元</td><td class="'+(d.totalWin>0?'win':'')+'">'+d.totalWin+'元</td>'+
+    '<td><button class="ghost sm" onclick="delDraw(\''+d.period+'\')">删</button></td></tr>';
+  }).join('')+'</table>';
+}
+function renderStats(){
+  const cost = state.draws.reduce((s,d)=>s+d.cost,0);
+  const win = state.draws.reduce((s,d)=>s+d.totalWin,0);
+  const net = win-cost;
+  document.getElementById('stCost').textContent = cost+' 元';
+  document.getElementById('stWin').textContent = win+' 元';
+  const elN = document.getElementById('stNet');
+  elN.textContent = (net>0?'+':'')+net+' 元';
+  elN.className = 'v '+(net<0?'neg':net>0?'pos':'');
+  document.getElementById('stRate').textContent = cost>0 ? (win/cost*100).toFixed(1)+'%' : '—';
+}
+function fmtOdds(p){
+  if(p<=0) return '—';
+  return '约 1/'+Math.round(1/p).toLocaleString('zh-CN');
+}
+function renderHonest(){
+  const n = Math.max(1,state.bets.length);
+  const m = state.draws.length;
+  const pPer = n/JACKPOT;
+  const pCum = 1-Math.pow(1-1/JACKPOT, n*m);
+  const pYear = 1-Math.pow(1-1/JACKPOT, n*156);
+  const unit = state.unitPrice||3;
+  document.getElementById('honest').innerHTML =
+  '<p>· 单注中一等奖概率固定为 <b>1/21,425,712</b>，与选号方法、历史走势、冷热号完全无关。<br>'+
+  '· 你每期投 '+n+' 注，本期中一等奖概率：<b>'+fmtOdds(pPer)+'</b><br>'+
+  '· 已记录 '+m+' 期，至今中过一等奖的累计概率：<b>'+(m>0?fmtOdds(pCum):'—')+'</b><br>'+
+  '· 若全年156期每期都买'+n+'注（年投入约 '+(n*unit*156).toLocaleString()+' 元），年内中一等奖概率：<b>'+fmtOdds(pYear)+'</b><br>'+
+  '· 大乐透长期返奖率约55%，数学期望是<b>每投100元平均拿回约55元</b>。时常中5元/15元的小奖正是规则设计使然，不代表"手感来了"。</p>'+
+  '<div class="warn">没有任何系统、算法或玄学能提高中一等奖的概率——能做到的人不会卖给你方法，他会自己去买。把彩票当娱乐支出，设好预算上限，超了就停。</div>';
+}
+
+/* ---------- 组合数学：各奖级单注理论概率 ---------- */
+function comb(n,k){ if(k<0||k>n) return 0; let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return Math.round(r); }
+const CF = comb(35,5), CB = comb(12,2);
+function tierProbs(){
+  const probs = {};
+  for(let f=0;f<=5;f++) for(let b=0;b<=2;b++){
+    const p = comb(5,f)*comb(30,5-f)/CF * comb(2,b)*comb(10,2-b)/CB;
+    const t = judge(f,b);
+    if(t>0) probs[t] = (probs[t]||0) + p;
+  }
+  return probs;
+}
+
+/* ---------- 预算与止损 ---------- */
+function setBudget(v){ state.budget = Math.max(0, Number(v)||0); saveState(); renderBudget(); }
+function renderBudget(){
+  if(state.budget===undefined || state.budget===null)
+    state.budget = state.bets.length*(state.unitPrice||3)*156;
+  document.getElementById('budget').value = state.budget;
+  const yr = new Date().getFullYear();
+  const yearDraws = state.draws.filter(d=>new Date(d.ts).getFullYear()===yr);
+  const spent = yearDraws.reduce((s,d)=>s+d.cost,0);
+  const won = yearDraws.reduce((s,d)=>s+d.totalWin,0);
+  const pct = state.budget>0 ? spent/state.budget*100 : 0;
+  const bar = document.getElementById('budgetBar');
+  bar.style.width = Math.min(100,pct)+'%';
+  bar.className = pct>=100 ? 'over' : pct>=80 ? 'w80' : '';
+  const left = state.budget - spent;
+  document.getElementById('budgetMsg').innerHTML = pct>=100
+    ? '<b style="color:#ff8a7d">已超出年度预算，建议本年度停手！</b>'
+    : pct>=80 ? '<b style="color:#f0a832">已用'+pct.toFixed(0)+'%，接近上限，注意节制</b>' : '';
+  document.getElementById('budgetDetail').textContent =
+    yr+'年已投入 '+spent+' 元（'+yearDraws.length+'期），中奖回收 '+won+' 元，预算剩余 '+left+' 元'+
+    (state.budget>0?'，约还够 '+Math.max(0,Math.floor(left/Math.max(1,state.bets.length*(state.unitPrice||3))))+' 期':'');
+}
+
+/* ---------- 号码热门度体检 ---------- */
+function checkBet(b){
+  const flags = [];
+  if(b.front.every(n=>n<=31)) flags.push('前区全部≤31：落在生日号区，购买人数最多的区域');
+  let run=1, maxRun=1;
+  for(let i=1;i<5;i++){ run = b.front[i]===b.front[i-1]+1 ? run+1 : 1; maxRun=Math.max(maxRun,run); }
+  if(maxRun>=3) flags.push(maxRun+'个连号：热门形态');
+  const d = b.front[1]-b.front[0];
+  if(d>0 && b.front.every((n,i)=>i===0||n-b.front[i-1]===d)) flags.push('等差数列：热门形态');
+  if(b.front.every(n=>n%2===1)) flags.push('前区全奇数：次热门形态');
+  if(b.front.every(n=>n%2===0)) flags.push('前区全偶数：次热门形态');
+  if(b.front.every(n=>n<=18)) flags.push('前区全部≤18：集中在上半区');
+  return flags;
+}
+function renderCheckup(){
+  const el = document.getElementById('checkup');
+  if(state.bets.length===0){ el.innerHTML='<p class="hint">先添加号码。</p>'; return; }
+  el.innerHTML = state.bets.map((b,i)=>{
+    const flags = checkBet(b);
+    const tag = flags.length===0
+      ? '<span class="okflag">✓ 无明显热门特征，平分风险较低</span>'
+      : flags.map(f=>'<span class="flag">⚠ '+f+'</span>').join('');
+    return '<div class="bet-row"><span class="bet-idx">注'+(i+1)+'</span>'+
+      balls(b.front,'f')+'<span class="sep">＋</span>'+balls(b.back,'b')+
+      '<div style="flex-basis:100%;margin-top:2px">'+tag+'</div></div>';
+  }).join('') +
+  '<p class="hint" style="margin-top:8px">改善建议：有⚠的注，把前区一两个号换到 <b>32–35</b> 区间即可显著降低撞车率（用「编辑」修改）。再次强调：这不改变中奖概率，只影响中大奖时分到的份额。</p>';
+}
+
+/* ---------- 蒙特卡洛模拟器 ---------- */
+function runSim(){
+  const years = Math.max(1, Math.min(50000, parseInt(document.getElementById('simYears').value,10)||10000));
+  const t1 = Number(document.getElementById('simT1').value)||8000000;
+  const t2 = Number(document.getElementById('simT2').value)||150000;
+  const nBets = Math.max(1, state.bets.length);
+  const unit = state.unitPrice||3;
+  const draws = years*156, trials = draws*nBets;
+  const probs = tierProbs();
+  const tiers = Object.keys(probs).map(Number).sort((a,b)=>a-b);
+  const cum = []; let acc = 0;
+  for(const t of tiers){ acc += probs[t]; cum.push([acc, t]); }
+  const PRIZE = {1:t1, 2:t2, 3:10000, 4:3000, 5:300, 6:200, 7:100, 8:15, 9:5};
+  const counts = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
+  let totalWin = 0;
+  for(let i=0;i<trials;i++){
+    const u = Math.random();
+    if(u >= acc) continue;
+    for(let j=0;j<cum.length;j++){
+      if(u < cum[j][0]){ const t = cum[j][1]; counts[t]++; totalWin += PRIZE[t]; break; }
+    }
+  }
+  const cost = trials*unit;
+  const net = totalWin - cost;
+  const waitYears = Math.round(JACKPOT/(156*nBets));
+  const rows = tiers.map(t=>{
+    const exp = trials*probs[t];
+    return '<tr><td>'+TIER_NAME[t]+'</td><td>'+counts[t].toLocaleString()+' 次</td><td>'+
+      (exp>=100?Math.round(exp).toLocaleString():exp.toFixed(2))+' 次</td><td>1/'+Math.round(1/probs[t]).toLocaleString()+'</td></tr>';
+  }).join('');
+  document.getElementById('simOut').innerHTML =
+  '<table><tr><th>奖级</th><th>模拟命中</th><th>理论期望</th><th>单注概率</th></tr>'+rows+'</table>'+
+  '<div class="simbox">模拟 <b>'+years.toLocaleString()+'</b> 年（'+trials.toLocaleString()+' 注）：总投入 <b>'+cost.toLocaleString()+
+  '</b> 元，总回收 <b>'+totalWin.toLocaleString()+'</b> 元，净'+(net<0?'亏':'赚')+' <b>'+Math.abs(net).toLocaleString()+
+  '</b> 元（回收率 '+(totalWin/cost*100).toFixed(1)+'%，平均每年'+(net<0?'亏':'赚')+' '+Math.abs(Math.round(net/years)).toLocaleString()+' 元）。<br>'+
+  '一等奖共中 <b>'+counts[1]+'</b> 次 —— 按此打法，平均约每 <b>'+waitYears.toLocaleString()+'</b> 年才能期望中一次一等奖。'+
+  (counts[1]===0&&years>=waitYears/3?' 这次连模拟器都没中，可见有多难。':'')+'</div>';
+}
+
+/* ---------- 运气体检：理论 vs 实际 ---------- */
+function renderLuck(){
+  const el = document.getElementById('luck'); if(!el) return;
+  renderLuckInto(el);
+}
+function renderLuckInto(el){
+  const trials = state.draws.reduce((s,d)=>s+d.results.length,0);
+  if(trials===0){ el.innerHTML='<p class="hint">录入几期开奖后，这里会把你的实际中奖次数和理论期望对比（纯娱乐向统计）。</p>'; return; }
+  const probs = tierProbs();
+  const actual = {};
+  state.draws.forEach(d=>d.results.forEach(r=>{ if(r.tier>0) actual[r.tier]=(actual[r.tier]||0)+1; }));
+  const tiers = Object.keys(probs).map(Number).sort((a,b)=>a-b);
+  const rows = tiers.map(t=>{
+    const exp = trials*probs[t];
+    const act = actual[t]||0;
+    const mark = act>exp ? ' <span style="color:#52d196">↑</span>' : act<exp&&exp>=0.5 ? ' <span style="color:#ff8a7d">↓</span>' : '';
+    return '<tr><td>'+TIER_NAME[t]+'</td><td>'+(exp>=10?exp.toFixed(0):exp.toFixed(2))+' 次</td><td>'+act+' 次'+mark+'</td></tr>';
+  }).join('');
+  el.innerHTML = '<p class="hint">已记录 '+state.draws.length+' 期，共 '+trials+' 注</p>'+
+  '<table><tr><th>奖级</th><th>理论期望次数</th><th>你的实际次数</th></tr>'+rows+'</table>'+
+  '<p class="hint" style="margin-top:6px">小样本下波动很大，高于或低于期望都正常，不代表"手气趋势"——下一期和过去毫无关系。</p>';
+}
+
+/* ---------- 选号方法实验室 ---------- */
+const TRI_NAME = ['坤','艮','坎','巽','震','离','兑','乾'];
+const TRI_SYM = {乾:'☰',兑:'☱',离:'☲',震:'☳',巽:'☴',坎:'☵',艮:'☶',坤:'☷'};
+const HEX_NAMES = {
+'乾乾':'乾为天','乾兑':'天泽履','乾离':'天火同人','乾震':'天雷无妄','乾巽':'天风姤','乾坎':'天水讼','乾艮':'天山遁','乾坤':'天地否',
+'兑乾':'泽天夬','兑兑':'兑为泽','兑离':'泽火革','兑震':'泽雷随','兑巽':'泽风大过','兑坎':'泽水困','兑艮':'泽山咸','兑坤':'泽地萃',
+'离乾':'火天大有','离兑':'火泽睽','离离':'离为火','离震':'火雷噬嗑','离巽':'火风鼎','离坎':'火水未济','离艮':'火山旅','离坤':'火地晋',
+'震乾':'雷天大壮','震兑':'雷泽归妹','震离':'雷火丰','震震':'震为雷','震巽':'雷风恒','震坎':'雷水解','震艮':'雷山小过','震坤':'雷地豫',
+'巽乾':'风天小畜','巽兑':'风泽中孚','巽离':'风火家人','巽震':'风雷益','巽巽':'巽为风','巽坎':'风水涣','巽艮':'风山渐','巽坤':'风地观',
+'坎乾':'水天需','坎兑':'水泽节','坎离':'水火既济','坎震':'水雷屯','坎巽':'水风井','坎坎':'坎为水','坎艮':'水山蹇','坎坤':'水地比',
+'艮乾':'山天大畜','艮兑':'山泽损','艮离':'山火贲','艮震':'山雷颐','艮巽':'山风蛊','艮坎':'山水蒙','艮艮':'艮为山','艮坤':'山地剥',
+'坤乾':'地天泰','坤兑':'地泽临','坤离':'地火明夷','坤震':'地雷复','坤巽':'地风升','坤坎':'地水师','坤艮':'地山谦','坤坤':'坤为地'};
+
+function rand(max){
+  const a = new Uint32Array(1); crypto.getRandomValues(a);
+  return 1 + (a[0] % max);
+}
+function pickUnique(count,max){
+  const s = new Set();
+  while(s.size<count) s.add(rand(max));
+  return [...s].sort((a,b)=>a-b);
+}
+function isPopular(front){
+  if(front.every(n=>n<=31)) return true;
+  let run=1;
+  for(let i=1;i<front.length;i++){ run = (front[i]===front[i-1]+1)? run+1 : 1; if(run>=3) return true; }
+  const d = front[1]-front[0];
+  if(d>0 && front.every((n,i)=>i===0||n-front[i-1]===d)) return true;
+  return false;
+}
+let funNums = null;
+function showFun(p, extraHtml, warn){
+  funNums = p;
+  document.getElementById('funOut').innerHTML = (extraHtml||'')+
+  '<div style="text-align:center;margin:10px 0">'+balls(p.front,'f')+'<span class="sep">＋</span>'+balls(p.back,'b')+'</div>'+
+  '<p class="hint" style="text-align:center">方法：<b>'+p.method+'</b>'+
+  (warn?'<br><span style="color:#ff8a7d">'+warn+'</span>':'')+
+  '<br>中一等奖概率仍是 1/21,425,712，分毫未变。</p>';
+  document.getElementById('adoptBtn').style.display='inline-block';
+}
+function shakeGua(){
+  const yaos = [];
+  for(let i=0;i<6;i++){
+    let heads=0; for(let c=0;c<3;c++) heads += rand(2)-1;
+    yaos.push(heads>=2?1:0);
+  }
+  const lower = TRI_NAME[yaos[0]+yaos[1]*2+yaos[2]*4];
+  const upper = TRI_NAME[yaos[3]+yaos[4]*2+yaos[5]*4];
+  const name = HEX_NAMES[upper+lower] || (upper+lower);
+  const gua = '<div class="gua">'+TRI_SYM[upper]+TRI_SYM[lower]+'</div><div class="gua-name">'+name+'</div>';
+  showFun({front:pickUnique(5,35), back:pickUnique(2,12), method:'周易摇卦·'+name}, gua);
+}
+function genFib(){
+  const fib35 = [1,2,3,5,8,13,21,34], fib12 = [1,2,3,5,8];
+  const front = [...fib35].sort(()=>Math.random()-.5).slice(0,5).sort((a,b)=>a-b);
+  const back = [...fib12].sort(()=>Math.random()-.5).slice(0,2).sort((a,b)=>a-b);
+  showFun({front, back, method:'斐波那契数列'}, '',
+   '注意：斐波那契是大众都知道的"聪明选法"，恰恰是热门组合——中大奖被平分的风险最高。');
+}
+function genStat(){
+  const p = machinePick(true);
+  showFun({front:p.front, back:p.back, method:'统计学·机选避热'});
+}
+function genRand(){
+  const p = machinePick(false);
+  showFun({front:p.front, back:p.back, method:'纯随机'});
+}
+async function adoptFun(){
+  if(!funNums) return;
+  const dup = state.bets.findIndex(b=>sameBet(b,funNums));
+  if(dup>=0){ ui.toast('这组号码与注'+(dup+1)+'完全相同，未加入','warn2'); return; }
+  const note = funNums.method+'（'+new Date().toLocaleDateString('zh-CN')+'）';
+  if(state.bets.length < MAX_BETS){
+    state.bets.push({front:[...funNums.front], back:[...funNums.back], note});
+    saveState(); renderAll();
+    ui.toast('已加入为注'+state.bets.length+'，依据「'+funNums.method+'」');
+  }else{
+    const idx = await ui.pick('纪律：每期只买'+MAX_BETS+'注。要用这组新号替换哪一注？',
+      state.bets.map((b,i)=>'注'+(i+1)+'　'+fmtBet(b)+(b.note?'　<span class="hint">'+esc(b.note)+'</span>':'')));
+    if(idx===null) return;
+    state.bets[idx] = {front:[...funNums.front], back:[...funNums.back], note};
+    saveState(); renderAll();
+    ui.toast('已替换注'+(idx+1)+'，依据「'+funNums.method+'」。记得同步实际购票');
+  }
+}
+
+/* ---------- 真实彩票存档 ---------- */
+function addPhoto(input){
+  const f = input.files[0]; if(!f) return;
+  const period = document.getElementById('phPeriod').value.trim() || ('未标注 '+new Date().toLocaleDateString('zh-CN'));
+  const img = new Image();
+  img.onload = ()=>{
+    const maxW = 700, sc = Math.min(1, maxW/img.width);
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    if(!state.photos) state.photos = [];
+    state.photos.unshift({period, dataUrl:c.toDataURL('image/jpeg',0.6), ts:Date.now()});
+    saveState(); renderPhotos();
+    URL.revokeObjectURL(img.src);
+    ui.toast('已存档（'+period+'期）');
+  };
+  img.src = URL.createObjectURL(f);
+  input.value = '';
+}
+function renderPhotos(){
+  const el = document.getElementById('photoGrid');
+  const ps = state.photos||[];
+  el.innerHTML = ps.length===0
+   ? '<span class="hint">暂无存档。买票后拍照上传并标期号，开奖核对时有据可查。</span>'
+   : ps.map((p,i)=>'<div style="text-align:center"><img src="'+p.dataUrl+
+     '" style="height:100px;border-radius:10px;cursor:zoom-in;border:1px solid var(--line)" onclick="viewPhoto('+i+')">'+
+     '<div class="hint">'+esc(p.period)+'期 <a href="javascript:void(0)" onclick="delPhoto('+i+')">删</a></div></div>').join('');
+}
+function viewPhoto(i){
+  const p = (state.photos||[])[i]; if(!p) return;
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:99;cursor:zoom-out';
+  d.innerHTML = '<img src="'+p.dataUrl+'" style="max-width:92%;max-height:92%;border-radius:10px">';
+  d.onclick = ()=>d.remove();
+  document.body.appendChild(d);
+}
+async function delPhoto(i){
+  if(!(await ui.confirm('删除这张票据存档？','删除','取消'))) return;
+  state.photos.splice(i,1); saveState(); renderPhotos();
+  ui.toast('已删除');
+}
+
+/* ---------- 数据管理 ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '大乐透账本备份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  ui.toast('备份已导出');
+}
+function importData(input){
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const s = JSON.parse(r.result);
+      if(!Array.isArray(s.bets)||!Array.isArray(s.draws)) throw 0;
+      state = s; saveState(); renderAll(); ui.toast('导入成功');
+    }catch(e){ ui.toast('文件格式不对','warn2'); }
+  };
+  r.readAsText(f);
+  input.value='';
+}
+async function clearAll(){
+  if(!(await ui.confirm('确定清空全部投注与记录？建议先导出备份。','清空','取消'))) return;
+  localStorage.removeItem(KEY);
+  state = load(); renderAll();
+  ui.toast('已重置');
+}
+
+function renderAll(){
+  renderBets(); renderHistory(); renderStats(); renderHonest();
+  renderBudget(); renderCheckup(); renderLuck(); renderPhotos();
+  const sb = document.getElementById('simBets'); if(sb) sb.textContent = state.bets.length;
+}
+
+/* ---------- 联网：自动获取官方开奖（失败则手动录入） ---------- */
+async function fetchLatest(){
+  ui.toast('正在向体彩官方接口请求最新开奖…');
+  try{
+    const r = await fetch('https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=10&isVerify=1&pageNo=1');
+    if(!r.ok) throw 0;
+    const j = await r.json();
+    const list = (j && j.value && j.value.list) || [];
+    if(!list.length) throw 0;
+    const fresh = list.find(x=>!state.draws.some(d=>d.period===String(x.lotteryDrawNum)));
+    if(!fresh){ ui.toast('最近10期都已记录，没有新开奖'); return; }
+    const nums = String(fresh.lotteryDrawResult).trim().split(/\s+/);
+    if(nums.length<7) throw 0;
+    document.getElementById('dPeriod').value = String(fresh.lotteryDrawNum);
+    document.getElementById('dFront').value = nums.slice(0,5).join(' ');
+    document.getElementById('dBack').value = nums.slice(5,7).join(' ');
+    ui.toast('已填入第'+fresh.lotteryDrawNum+'期（'+(fresh.lotteryDrawTime||'')+'），核对无误后点「核对并记录」');
+  }catch(e){
+    ui.toast('自动获取失败（接口限制或网络问题），请到官方App查看后手动录入','warn2');
+  }
+}
+/* ---------- PWA：离线缓存 ---------- */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
+renderAll();
+</script>
+</body>
+</html>
