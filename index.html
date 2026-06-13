@@ -2,17 +2,20 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>大乐透投注账本 PRO</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b1026">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="大乐透账本">
+<meta name="color-scheme" content="dark">
 <style>
 :root{
 --gold:#f6c453;--red:#e84a3c;--red-deep:#b02d23;--blue:#5b9aff;
---ink:#ecearf5;--text:#e9e6f4;--muted:#9a93b8;--line:rgba(255,255,255,.10);
+--ink:#eceaf5;--text:#e9e6f4;--muted:#9a93b8;--line:rgba(255,255,255,.10);
 --card:rgba(255,255,255,.055);--green:#52d196;--purple:#a78bfa;--amber:#f0a832;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -25,10 +28,6 @@ header h1{font-size:30px;letter-spacing:6px;background:linear-gradient(90deg,#f6
 -webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 5s linear infinite;position:relative;}
 @keyframes shimmer{to{background-position:200% 0;}}
 header p{margin-top:8px;font-size:13px;color:var(--muted);position:relative;}
-nav{position:sticky;top:0;z-index:50;display:flex;gap:6px;overflow-x:auto;padding:10px 14px;
-background:rgba(11,16,38,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
-nav a{flex:none;font-size:12px;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:20px;border:1px solid var(--line);transition:.2s;}
-nav a:hover{color:var(--gold);border-color:var(--gold);}
 main{max-width:880px;margin:0 auto;padding:16px;}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0;}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;backdrop-filter:blur(8px);
@@ -104,6 +103,38 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 .cf{position:fixed;top:-14px;width:8px;height:14px;z-index:98;border-radius:2px;animation:fall 2.8s linear forwards;pointer-events:none;}
 @keyframes fall{to{transform:translateY(108vh) rotate(720deg);opacity:.15;}}
 @media(max-width:520px){.ball{width:27px;height:27px;font-size:12px;}header h1{font-size:24px;letter-spacing:3px;}}
+
+/* ===== 原生 App 化：安全区 / 底部 Tab / 分页 / 启动屏 / 安装 ===== */
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;overscroll-behavior-y:none;}
+header{padding:calc(env(safe-area-inset-top) + 24px) 20px 16px;}
+.tab-hidden{display:none!important;}
+button,.tabbar,.card,.chip,.tag{-webkit-user-select:none;user-select:none;}
+.tabbar{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:90;display:flex;gap:2px;padding:6px 6px calc(env(safe-area-inset-bottom) + 6px);background:rgba(13,18,42,.92);backdrop-filter:blur(16px);border-top:1px solid var(--line);border-bottom:none;box-shadow:0 -6px 24px rgba(0,0,0,.45);}
+.tabbar .tab{position:relative;flex:1;background:none;box-shadow:none;border:none;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:var(--muted);font-size:10.5px;font-weight:600;}
+.tabbar .tab:hover{transform:none;box-shadow:none;}
+.tabbar .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:.18s;}
+.tabbar .tab.on{color:var(--gold);}
+.tabbar .tab.on svg{filter:drop-shadow(0 0 6px rgba(246,196,83,.6));transform:translateY(-1px);}
+#splash{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:linear-gradient(160deg,#0b1026,#1b1038 55%,#0b1026);animation:splashOut .45s ease .65s forwards;}
+#splash img{width:92px;height:92px;border-radius:22px;box-shadow:0 14px 44px rgba(0,0,0,.55);}
+#splash .st{font-size:21px;font-weight:700;letter-spacing:3px;background:linear-gradient(90deg,#f6c453,#ff8a6e);-webkit-background-clip:text;background-clip:text;color:transparent;}
+#splash .sp{font-size:12px;color:var(--muted);letter-spacing:1px;}
+#splash .sd{width:26px;height:26px;border:3px solid rgba(246,196,83,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes splashOut{to{opacity:0;visibility:hidden;}}
+#splash.hide{display:none;}
+.install-card{background:linear-gradient(135deg,rgba(246,196,83,.14),rgba(232,74,60,.10));border:1px solid rgba(246,196,83,.4);border-radius:14px;padding:15px;}
+.install-card h3{font-size:15px;color:#fff;margin-bottom:7px;}
+.install-steps{font-size:13px;color:var(--text);line-height:2.1;}
+.install-steps .ico{display:inline-flex;vertical-align:-3px;margin:0 2px;}
+.installed-badge{color:var(--green);font-weight:700;font-size:14px;}
+#installBanner{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 10px);z-index:95;display:none;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(29,21,53,.97);backdrop-filter:blur(12px);border:1px solid rgba(246,196,83,.45);box-shadow:0 12px 40px rgba(0,0,0,.5);}
+#installBanner img{width:34px;height:34px;border-radius:9px;}
+#installBanner .ib-t{flex:1;font-size:12px;line-height:1.5;color:var(--text);}
+#installBanner .ib-t b{color:var(--gold);}
+#installBanner button{padding:7px 12px;font-size:12px;}
+#installBanner button.ghost{padding:7px 9px;}
+#toasts{bottom:calc(82px + env(safe-area-inset-bottom));}
 </style>
 </head>
 <body>
@@ -111,20 +142,16 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <h1>大乐透投注账本 PRO</h1>
 <p>每期5注 · 真实记录 · 自动核对 · 诚实概率 —— 中奖以官方开奖为准</p>
 </header>
-<nav>
-<a href="#sec-budget">预算</a><a href="#sec-bets">我的5注</a><a href="#sec-draw">录开奖</a><a href="#sec-his">记录</a>
-<a href="#sec-honest">概率</a><a href="#sec-check">体检</a><a href="#sec-sim">模拟器</a><a href="#sec-lab">实验室</a><a href="#sec-photo">存档</a>
-</nav>
 <main>
 
-<div class="cards">
+<div class="cards" data-tab="home">
 <div class="card"><div class="l">累计投入</div><div class="v" id="stCost">0 元</div></div>
 <div class="card"><div class="l">累计中奖</div><div class="v" id="stWin">0 元</div></div>
 <div class="card"><div class="l">净盈亏</div><div class="v" id="stNet">0 元</div></div>
 <div class="card"><div class="l">回收率</div><div class="v" id="stRate">—</div></div>
 </div>
 
-<section id="sec-budget">
+<section id="sec-budget" data-tab="home">
 <h2>预算与止损</h2>
 <div class="row">
 <span class="hint">年度预算上限：</span>
@@ -136,7 +163,7 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <p class="hint" id="budgetDetail"></p>
 </section>
 
-<section id="sec-bets">
+<section id="sec-bets" data-tab="bets">
 <h2>我的号码 <span class="chip" id="betChip">5/5</span></h2>
 <div id="betList"></div>
 <div class="row">
@@ -152,7 +179,7 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <p class="hint"><b>为什么没有"按冷热号/走势自动调号"：</b>每期开奖独立随机，冷热号、遗漏值对下一期没有任何预测力——按它们调号既不增也不减概率，只会制造"在做分析"的错觉。这里的自动更新是「机选避热」：概率不变，但避开大众爱买的组合，中大奖时更不容易被平分。另注意：追号票号码在票面已锁定，想每期换号需放弃追号、逐期购票。</p>
 </section>
 
-<section id="sec-draw">
+<section id="sec-draw" data-tab="draw">
 <h2>录入开奖结果</h2>
 <div class="row">
 <input type="text" id="dPeriod" placeholder="期号 如 26062" style="width:110px">
@@ -164,28 +191,28 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <p class="hint">开奖号以中国体彩官网/官方App为准。一、二等奖为浮动奖金，会弹出输入框让你填官方实际金额（追加票一二等奖另有基本奖金80%的追加部分，填到手总额）。</p>
 </section>
 
-<section id="sec-his">
+<section id="sec-his" data-tab="draw">
 <h2>历史记录</h2>
 <div id="history"></div>
 </section>
 
-<section class="honest" id="sec-honest">
+<section class="honest" id="sec-honest" data-tab="analyze">
 <h2>诚实概率面板（数学说了算）</h2>
 <div id="honest"></div>
 </section>
 
-<section id="sec-check">
+<section id="sec-check" data-tab="analyze">
 <h2>号码热门度体检（平分风险）</h2>
 <div id="checkup"></div>
 <p class="hint">原理：任何组合中奖概率完全相同，但一、二等奖按中奖注数<b>平分奖池</b>。买的人越多的组合（生日号≤31、连号、等差…），中了大奖反而分得越少。此体检只针对"被平分风险"，与中奖概率无关。</p>
 </section>
 
-<section id="sec-luck">
+<section id="sec-luck" data-tab="analyze">
 <h2>运气体检：理论 vs 实际</h2>
 <div id="luck"></div>
 </section>
 
-<section id="sec-sim">
+<section id="sec-sim" data-tab="analyze">
 <h2>蒙特卡洛模拟器：把你的打法跑上万年</h2>
 <div class="row">
 <span class="hint">模拟</span>
@@ -203,7 +230,7 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <div id="simOut"></div>
 </section>
 
-<section class="fun" id="sec-lab">
+<section class="fun" id="sec-lab" data-tab="bets">
 <h2>选号方法实验室 <span class="tag">四种方法概率完全相同 · 标签会记入每注依据</span></h2>
 <div class="row">
 <button style="background:linear-gradient(135deg,#a78bfa,#7c5fd4)" onclick="shakeGua()">周易摇卦</button>
@@ -216,7 +243,12 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <p class="hint">诚实说明：四种方法每注中一等奖概率都是 1/21,425,712，<b>没有高下之分</b>，标签只是帮你记录"这注是怎么来的"。唯一的真实区别在撞车率：<b>统计学·机选避热</b>避开大众热门组合，中大奖被平分的风险最低；<b>斐波那契</b>（1,2,3,5,8,13,21,34）是出了名的大众组合，撞车风险最高；<b>周易摇卦</b>图个仪式感。选哪种是心情问题，不是数学问题。</p>
 </section>
 
-<section id="sec-photo">
+<section data-tab="me" id="sec-install">
+<h2>安装为应用</h2>
+<div class="install-card" id="installArea"></div>
+</section>
+
+<section id="sec-photo" data-tab="me">
 <h2>真实彩票存档</h2>
 <div class="row">
 <input type="text" id="phPeriod" placeholder="期号 如 26062" style="width:110px">
@@ -227,7 +259,7 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <p class="hint">照片自动压缩存在本机浏览器中，随JSON备份导出导入，点缩略图放大。提示：本工具数据只在你电脑上，Claude看不到——想让我帮你识别票面、核对中奖、更新账本，直接把彩票拍照发到对话里。</p>
 </section>
 
-<section>
+<section data-tab="me">
 <h2>数据管理</h2>
 <div class="row">
 <button class="ghost" onclick="exportData()">导出备份 (JSON)</button>
@@ -241,6 +273,17 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 <footer>理性购彩 · 量力而行 · 未满18周岁不得购买彩票<br>本工具仅作个人记账与核对参考，中奖以彩票实物及官方核验为准</footer>
 </main>
 <div id="toasts"></div>
+
+<div id="splash"><img src="icon-192.png" alt="大乐透投注账本"><div class="st">大乐透投注账本</div><div class="sp">每期5注 · 真实记录 · 诚实概率</div><div class="sd"></div></div>
+<div id="installBanner"><img src="icon-192.png" alt=""><div class="ib-t"><b>装成 App</b> · 独立图标 / 全屏 / 离线可用</div><button id="ibInstall">安装</button><button class="ghost sm" id="ibClose" aria-label="关闭">✕</button></div>
+<nav class="tabbar">
+<button class="tab" data-go="home"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3.5l9 7.3"/><path d="M5.5 9.4V20.5h13V9.4"/></svg><span>概览</span></button>
+<button class="tab" data-go="bets"><svg viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5a2 2 0 0 0 0 4A1.5 1.5 0 0 1 18.5 14h-13A1.5 1.5 0 0 1 4 12.5a2 2 0 0 0 0-4z"/><path d="M9.5 7.5v6"/></svg><span>号码</span></button>
+<button class="tab" data-go="draw"><svg viewBox="0 0 24 24"><path d="M20.5 11.5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V5A1.5 1.5 0 0 1 5 3.5h10"/><path d="M8.5 11.5l3 3 8-8.5"/></svg><span>开奖</span></button>
+<button class="tab" data-go="analyze"><svg viewBox="0 0 24 24"><path d="M4 20.5V11"/><path d="M10 20.5V4"/><path d="M16 20.5v-6.5"/><path d="M2.5 20.5h19"/></svg><span>分析</span></button>
+<button class="tab" data-go="me"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.6-6 7.5-6s7.5 2 7.5 6"/></svg><span>我的</span></button>
+</nav>
+
 
 <script>
 'use strict';
@@ -904,6 +947,63 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
     });
   }).catch(function(){});
 }
+/* ---------- 原生 App 化：分页 Tab / 启动屏 / 安装到主屏 ---------- */
+var SHARE_ICON = '<svg viewBox="0 0 24 24" width="17" height="17" style="stroke:#5b9aff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 15.5V3.5"/><path d="M8 7.5l4-4 4 4"/><path d="M5.5 12v7.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V12"/></svg>';
+function switchTab(tab){
+  var els=document.querySelectorAll('[data-tab]');
+  for(var i=0;i<els.length;i++){ els[i].classList.toggle('tab-hidden', els[i].getAttribute('data-tab')!==tab); }
+  var tabs=document.querySelectorAll('.tabbar .tab');
+  for(var j=0;j<tabs.length;j++){ tabs[j].classList.toggle('on', tabs[j].getAttribute('data-go')===tab); }
+  window.scrollTo(0,0);
+}
+(function(){
+  var tabs=document.querySelectorAll('.tabbar .tab');
+  for(var i=0;i<tabs.length;i++){ (function(b){ b.addEventListener('click', function(){ switchTab(b.getAttribute('data-go')); }); })(tabs[i]); }
+  switchTab('home');
+  var sp=document.getElementById('splash');
+  if(sp){ setTimeout(function(){ sp.classList.add('hide'); }, 1100); }
+})();
+var deferredPrompt=null;
+function isStandalone(){ return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone===true; }
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+function doInstall(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(c){
+    if(c && c.outcome==='accepted' && ui && ui.toast) ui.toast('正在安装到主屏幕…');
+    deferredPrompt=null;
+    var b=document.getElementById('installBanner'); if(b) b.style.display='none';
+    refreshInstallUI();
+  });
+}
+function refreshInstallUI(){
+  var area=document.getElementById('installArea');
+  var banner=document.getElementById('installBanner');
+  if(!area) return;
+  if(isStandalone()){
+    area.innerHTML='<span class="installed-badge">✓ 已作为应用安装，正在独立窗口运行</span>';
+    if(banner) banner.style.display='none';
+    return;
+  }
+  if(deferredPrompt){
+    area.innerHTML='<h3>📲 安装到主屏幕</h3><p class="hint">装上后有独立图标、全屏运行、离线可用，跟原生 App 一样。</p><button id="btnInstall">安装到主屏幕</button>';
+    var bi=document.getElementById('btnInstall'); if(bi) bi.addEventListener('click', doInstall);
+    if(banner) banner.style.display='flex';
+  } else if(isIOS()){
+    area.innerHTML='<h3>📲 添加到主屏幕（iPhone / iPad）</h3><div class="install-steps">1. 用 <b>Safari</b> 打开本页<br>2. 点底部 <span class="ico">'+SHARE_ICON+'</span> 分享按钮<br>3. 下拉选「添加到主屏幕」<br>4. 右上角「添加」，桌面即出现图标</div>';
+    if(banner) banner.style.display='none';
+  } else {
+    area.innerHTML='<h3>📲 安装到主屏幕</h3><p class="hint">用 Chrome / Edge 打开，地址栏右侧会出现「安装」图标；或浏览器菜单里选「安装应用 / 添加到主屏幕」。</p>';
+    if(banner) banner.style.display='none';
+  }
+}
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferredPrompt=e; refreshInstallUI(); });
+window.addEventListener('appinstalled', function(){ deferredPrompt=null; if(ui && ui.toast) ui.toast('🎉 已安装到主屏幕'); refreshInstallUI(); });
+(function(){
+  var ibI=document.getElementById('ibInstall'); if(ibI) ibI.addEventListener('click', doInstall);
+  var ibC=document.getElementById('ibClose'); if(ibC) ibC.addEventListener('click', function(){ var b=document.getElementById('installBanner'); if(b) b.style.display='none'; });
+  refreshInstallUI();
+})();
 renderAll();
 </script>
 </body>
