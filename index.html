@@ -258,13 +258,65 @@ const DEFAULT_BETS = [
  {front:[7,14,18,22,29], back:[4,10], note:'票面手选（26062期起追20期）'}
 ];
 
+/* ---------- 数据校验：load 与 importData 共用 ---------- */
+function isNumArr(a,count,max){
+  return Array.isArray(a) && a.length===count && new Set(a).size===count &&
+    a.every(n=>Number.isInteger(n)&&n>=1&&n<=max);
+}
+function validBet(b){ return b && isNumArr(b.front,5,35) && isNumArr(b.back,2,12); }
+// 校验并规范化一个 state 对象。{ok, state, error}
+function normalizeState(raw){
+  if(!raw || typeof raw!=='object') return {ok:false, error:'不是有效的对象'};
+  if(!Array.isArray(raw.bets)) return {ok:false, error:'缺少投注数组 bets'};
+  if(!Array.isArray(raw.draws)) return {ok:false, error:'缺少开奖数组 draws'};
+  const bets = [];
+  for(let i=0;i<raw.bets.length && i<MAX_BETS;i++){
+    const b = raw.bets[i];
+    if(!validBet(b)) return {ok:false, error:'第'+(i+1)+'注号码超出范围或重复'};
+    bets.push({front:[...b.front].sort((x,y)=>x-y), back:[...b.back].sort((x,y)=>x-y),
+      note: typeof b.note==='string' ? b.note.slice(0,120) : ''});
+  }
+  const draws = [];
+  for(const d of raw.draws){
+    if(!d || typeof d.period!=='string' || !/^\d{5}$/.test(d.period)) return {ok:false, error:'某期期号非法（应为5位数字）'};
+    if(!isNumArr(d.front,5,35) || !isNumArr(d.back,2,12)) return {ok:false, error:'第'+d.period+'期开奖号超出范围'};
+    if(!Array.isArray(d.results)) return {ok:false, error:'第'+d.period+'期缺少 results'};
+    const results = d.results.map(r=>({
+      bet: validBet(r&&r.bet) ? {front:[...r.bet.front],back:[...r.bet.back],note:typeof r.bet.note==='string'?r.bet.note:''} : {front:[],back:[],note:''},
+      fHit: Math.max(0,Math.min(5, parseInt(r&&r.fHit,10)||0)),
+      bHit: Math.max(0,Math.min(2, parseInt(r&&r.bHit,10)||0)),
+      tier: Math.max(0,Math.min(9, parseInt(r&&r.tier,10)||0)),
+      prize: Math.max(0, Number(r&&r.prize)||0)
+    }));
+    draws.push({
+      period: d.period,
+      front:[...d.front].sort((x,y)=>x-y), back:[...d.back].sort((x,y)=>x-y),
+      cost: Math.max(0, Number(d.cost)||0),
+      totalWin: results.reduce((s,r)=>s+r.prize,0),
+      results,
+      ts: Number.isFinite(d.ts) ? d.ts : Date.now()
+    });
+  }
+  let photos = [];
+  if(Array.isArray(raw.photos)){
+    photos = raw.photos.filter(p=>p && typeof p.dataUrl==='string' && /^data:image\//.test(p.dataUrl))
+      .map(p=>({period: typeof p.period==='string'?p.period.slice(0,40):'', dataUrl:p.dataUrl, ts:Number.isFinite(p.ts)?p.ts:Date.now()}));
+  }
+  const unitPrice = (raw.unitPrice===2||raw.unitPrice==='2') ? 2 : 3;
+  const budget = Number.isFinite(raw.budget) && raw.budget>=0 ? raw.budget : undefined;
+  return {ok:true, state:{bets, draws, photos, unitPrice, budget}};
+}
+function defaultState(){
+  return {bets: JSON.parse(JSON.stringify(DEFAULT_BETS)), draws: [], photos: [], unitPrice: 3};
+}
 let state = load();
 function load(){
   try{
-    const s = JSON.parse(localStorage.getItem(KEY));
-    if(s && Array.isArray(s.bets)) return s;
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    const r = normalizeState(raw);
+    if(r.ok && r.state.bets.length) return r.state;
   }catch(e){}
-  return {bets: JSON.parse(JSON.stringify(DEFAULT_BETS)), draws: [], unitPrice: 3};
+  return defaultState();
 }
 function saveState(){
   state.unitPrice = parseInt(document.getElementById('unitPrice').value,10);
@@ -419,7 +471,7 @@ async function recordDraw(){
   const front = parseNums(document.getElementById('dFront').value,5,35);
   const back = parseNums(document.getElementById('dBack').value,2,12);
   if(!period){ ui.toast('请填写期号','warn2'); return; }
-  if(!/^\d{5}$/.test(period)) ui.toast('提示：大乐透期号一般是5位数字，如 26062');
+  if(!/^\d{5}$/.test(period)){ ui.toast('期号格式不对：应为5位数字，如 26062','warn2'); return; }
   if(!front||!back){ ui.toast('开奖号格式不对：前区5个(1-35)，后区2个(1-12)','warn2'); return; }
   if(state.draws.some(d=>d.period===period)){ ui.toast('第'+period+'期已记录过，如需修改请先删除该期','warn2'); return; }
   if(state.bets.length===0){ ui.toast('请先添加投注号码','warn2'); return; }
@@ -475,15 +527,24 @@ function renderHistory(){
   if(state.draws.length===0){ el.innerHTML = '<p class="hint">还没有记录。开奖后把官方号码录进来，工具会自动核对你的'+state.bets.length+'注号码。</p>'; return; }
   el.innerHTML = '<table><tr><th>期号</th><th>开奖号码</th><th>中奖明细</th><th>成本</th><th>中奖</th><th></th></tr>'+
   state.draws.map(d=>{
+    const pe = esc(d.period);
     const detail = d.results.map((r,i)=>{
       if(r.tier===0) return '';
-      const edit = (r.tier<=2)?' <a href="javascript:void(0)" onclick="editPrize(\''+d.period+'\','+i+')">改金额</a>':'';
-      return '注'+(i+1)+'：'+TIER_NAME[r.tier]+' '+r.prize+'元（中'+r.fHit+'+'+r.bHit+'）'+edit;
+      const edit = (r.tier<=2)?' <a href="javascript:void(0)" data-act="edit" data-period="'+pe+'" data-idx="'+i+'">改金额</a>':'';
+      return '注'+(i+1)+'：'+TIER_NAME[r.tier]+' '+(+r.prize||0)+'元（中'+(+r.fHit||0)+'+'+(+r.bHit||0)+'）'+edit;
     }).filter(Boolean).join('<br>') || '<span class="hint">未中奖</span>';
-    return '<tr><td>'+d.period+'</td><td>'+balls(d.front,'f')+balls(d.back,'b')+'</td><td>'+detail+'</td>'+
-    '<td>'+d.cost+'元</td><td class="'+(d.totalWin>0?'win':'')+'">'+d.totalWin+'元</td>'+
-    '<td><button class="ghost sm" onclick="delDraw(\''+d.period+'\')">删</button></td></tr>';
+    return '<tr><td>'+pe+'</td><td>'+balls(d.front,'f')+balls(d.back,'b')+'</td><td>'+detail+'</td>'+
+    '<td>'+(+d.cost||0)+'元</td><td class="'+(d.totalWin>0?'win':'')+'">'+(+d.totalWin||0)+'元</td>'+
+    '<td><button class="ghost sm" data-act="del" data-period="'+pe+'">删</button></td></tr>';
   }).join('')+'</table>';
+  // 事件委托：避免把 period 拼进 inline onclick（防注入）
+  el.querySelectorAll('[data-act]').forEach(elm=>{
+    elm.addEventListener('click', ()=>{
+      const p = elm.getAttribute('data-period');
+      if(elm.getAttribute('data-act')==='del') delDraw(p);
+      else editPrize(p, parseInt(elm.getAttribute('data-idx'),10));
+    });
+  });
 }
 function renderStats(){
   const cost = state.draws.reduce((s,d)=>s+d.cost,0);
@@ -784,11 +845,12 @@ function importData(input){
   const f = input.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = ()=>{
-    try{
-      const s = JSON.parse(r.result);
-      if(!Array.isArray(s.bets)||!Array.isArray(s.draws)) throw 0;
-      state = s; saveState(); renderAll(); ui.toast('导入成功');
-    }catch(e){ ui.toast('文件格式不对','warn2'); }
+    let parsed;
+    try{ parsed = JSON.parse(r.result); }
+    catch(e){ ui.toast('文件不是有效的 JSON','warn2'); return; }
+    const res = normalizeState(parsed);
+    if(!res.ok){ ui.toast('导入失败：'+res.error,'warn2'); return; }
+    state = res.state; saveState(); renderAll(); ui.toast('导入成功');
   };
   r.readAsText(f);
   input.value='';
@@ -827,9 +889,20 @@ async function fetchLatest(){
     ui.toast('自动获取失败（接口限制或网络问题），请到官方App查看后手动录入','warn2');
   }
 }
-/* ---------- PWA：离线缓存 ---------- */
+/* ---------- PWA：离线缓存 + 新版本提示 ---------- */
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
-  navigator.serviceWorker.register('./sw.js').catch(function(){});
+  navigator.serviceWorker.register('./sw.js').then(function(reg){
+    // 发现新版本（已激活旧 SW 的情况下）
+    reg.addEventListener('updatefound', function(){
+      const nw = reg.installing;
+      if(!nw) return;
+      nw.addEventListener('statechange', function(){
+        if(nw.state==='installed' && navigator.serviceWorker.controller){
+          ui.toast('已更新到新版本，刷新页面即可生效');
+        }
+      });
+    });
+  }).catch(function(){});
 }
 renderAll();
 </script>
