@@ -243,6 +243,18 @@ button,.tabbar,.card,.chip,.tag{-webkit-user-select:none;user-select:none;}
 <p class="hint">诚实说明：四种方法每注中一等奖概率都是 1/21,425,712，<b>没有高下之分</b>，标签只是帮你记录"这注是怎么来的"。唯一的真实区别在撞车率：<b>统计学·机选避热</b>避开大众热门组合，中大奖被平分的风险最低；<b>斐波那契</b>（1,2,3,5,8,13,21,34）是出了名的大众组合，撞车风险最高；<b>周易摇卦</b>图个仪式感。选哪种是心情问题，不是数学问题。</p>
 </section>
 
+<section data-tab="me" id="sec-sync">
+<h2>多设备同步 <span class="chip" id="syncChip">未启用</span></h2>
+<p class="hint">输入一个<b>同步码</b>,家人在各自手机上输入<b>同一个码</b>就能看同一本账。数据经<b>端到端加密</b>存在你家 NAS,服务器只存密文、读不到内容。<b>同步码就是密钥,只发给要共用这本账的人。</b></p>
+<div class="row">
+<input type="text" id="syncCodeInput" placeholder="同步码(≥8位,可点生成)" style="width:200px" autocapitalize="off" autocorrect="off" spellcheck="false">
+<button class="ghost sm" onclick="genSyncCode()">生成</button>
+<button class="sm" onclick="enableSync()">启用同步</button>
+<button class="ghost sm" onclick="disableSync()">关闭</button>
+</div>
+<p class="hint" id="syncStatus" style="margin-top:6px">未启用 —— 当前仅存本机</p>
+</section>
+
 <section data-tab="me" id="sec-install">
 <h2>安装为应用</h2>
 <div class="install-card" id="installArea"></div>
@@ -365,6 +377,7 @@ function saveState(){
   state.unitPrice = parseInt(document.getElementById('unitPrice').value,10);
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
   catch(e){ ui.toast('本机存储已满（多半是照片过多），请导出备份后删除部分照片','warn2'); }
+  if(typeof syncCode!=='undefined' && syncCode && !syncSuppress) scheduleSync();
 }
 
 function pad(n){ return String(n).padStart(2,'0'); }
@@ -1004,7 +1017,128 @@ window.addEventListener('appinstalled', function(){ deferredPrompt=null; if(ui &
   var ibC=document.getElementById('ibClose'); if(ibC) ibC.addEventListener('click', function(){ var b=document.getElementById('installBanner'); if(b) b.style.display='none'; });
   refreshInstallUI();
 })();
+/* ===== 多设备同步:零知识(同步码=定位id+加密密钥) → PocketBase@NAS via Cloudflare Tunnel ===== */
+var SYNC_EP='https://dlt.sanmoshice.com';
+var SYNC_COL='ledgers';
+var SYNC_CODE_KEY='dlt_sync_code';
+var SYNC_REV_KEY='dlt_sync_rev';
+var syncCode=localStorage.getItem(SYNC_CODE_KEY)||'';
+var syncRev=parseInt(localStorage.getItem(SYNC_REV_KEY),10)||0;
+var syncTimer=null, syncBusy=false, syncSuppress=false;
+async function sha256Hex(str){
+  var buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+async function deriveSyncKey(code){
+  var saltHex=await sha256Hex('dltsalt:'+code);
+  var salt=Uint8Array.from(saltHex.slice(0,32).match(/../g).map(function(h){return parseInt(h,16);}));
+  var base=await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt:salt, iterations:120000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+}
+async function syncRecordId(code){ return (await sha256Hex('dltid:'+code)).slice(0,15); }
+function _b64(buf){ var s='', a=new Uint8Array(buf); for(var i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s); }
+function _unb64(str){ return Uint8Array.from(atob(str), function(c){return c.charCodeAt(0);}); }
+async function syncEncrypt(code, obj){
+  var key=await deriveSyncKey(code);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return _b64(iv)+':'+_b64(ct);
+}
+async function syncDecrypt(code, payload){
+  var key=await deriveSyncKey(code);
+  var parts=payload.split(':');
+  var pt=await crypto.subtle.decrypt({name:'AES-GCM', iv:_unb64(parts[0])}, key, _unb64(parts[1]));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function nowHM(){ return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}); }
+function setSyncStatus(msg){ var el=document.getElementById('syncStatus'); if(el) el.textContent=msg; }
+function updateSyncChip(){
+  var c=document.getElementById('syncChip'), inp=document.getElementById('syncCodeInput');
+  if(!c) return;
+  if(syncCode){ c.textContent='已启用'; c.className='chip ok'; if(inp && !inp.value) inp.value=syncCode; }
+  else { c.textContent='未启用'; c.className='chip'; }
+}
+function scheduleSync(){ if(!syncCode) return; clearTimeout(syncTimer); syncTimer=setTimeout(pushSync,1500); }
+async function pushSync(){
+  if(!syncCode || syncBusy) return;
+  syncBusy=true; setSyncStatus('同步中…');
+  try{
+    var id=await syncRecordId(syncCode);
+    var exists=false, remoteRev=0;
+    var r=await fetch(SYNC_EP+'/api/collections/'+SYNC_COL+'/records/'+id, {cache:'no-store'});
+    if(r.ok){ exists=true; var d=await r.json(); remoteRev=+d.rev||0; }
+    var newRev=Math.max(syncRev,remoteRev)+1;
+    var payload=await syncEncrypt(syncCode, state);
+    var resp;
+    if(exists){ resp=await fetch(SYNC_EP+'/api/collections/'+SYNC_COL+'/records/'+id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({payload:payload, rev:newRev})}); }
+    else { resp=await fetch(SYNC_EP+'/api/collections/'+SYNC_COL+'/records', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:id, payload:payload, rev:newRev})}); }
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    syncRev=newRev; localStorage.setItem(SYNC_REV_KEY, String(syncRev));
+    setSyncStatus('已同步 · '+nowHM());
+  }catch(e){ setSyncStatus('同步失败(数据已存本机,联网后会重试):'+(e.message||e)); }
+  finally{ syncBusy=false; }
+}
+function applyRemoteState(st){
+  syncSuppress=true;
+  state=st;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  renderAll();
+  syncSuppress=false;
+}
+async function pullSync(opts){
+  opts=opts||{};
+  if(!syncCode || syncBusy) return;
+  syncBusy=true; if(!opts.quiet) setSyncStatus('检查云端…');
+  try{
+    var id=await syncRecordId(syncCode);
+    var r=await fetch(SYNC_EP+'/api/collections/'+SYNC_COL+'/records/'+id, {cache:'no-store'});
+    if(r.status===404){ setSyncStatus('云端暂无数据,正以本机为准上传'); syncBusy=false; await pushSync(); return; }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var d=await r.json();
+    var remoteRev=+d.rev||0;
+    if(remoteRev>syncRev && d.payload){
+      var remote=await syncDecrypt(syncCode, d.payload);
+      var norm=normalizeState(remote);
+      if(norm.ok){ syncRev=remoteRev; localStorage.setItem(SYNC_REV_KEY, String(syncRev)); applyRemoteState(norm.state); setSyncStatus('已从云端更新 · '+nowHM()); }
+      else setSyncStatus('云端数据校验未通过,已忽略');
+    } else setSyncStatus('已是最新 · '+nowHM());
+  }catch(e){ setSyncStatus('云端检查失败:'+(e.message||e)); }
+  finally{ syncBusy=false; }
+}
+function genSyncCode(){
+  var a=new Uint8Array(14); crypto.getRandomValues(a);
+  var abc='abcdefghjkmnpqrstuvwxyz23456789', s='';
+  for(var i=0;i<a.length;i++) s+=abc[a[i]%abc.length];
+  var inp=document.getElementById('syncCodeInput'); if(inp) inp.value=s;
+}
+async function enableSync(){
+  var v=((document.getElementById('syncCodeInput')||{}).value||'').trim();
+  if(v.length<8){ ui.toast('同步码至少 8 位,建议用「生成」按钮','warn2'); return; }
+  syncCode=v; localStorage.setItem(SYNC_CODE_KEY, v); syncRev=0; localStorage.setItem(SYNC_REV_KEY,'0');
+  updateSyncChip();
+  var hasLocal=(state.draws && state.draws.length) || (state.photos && state.photos.length);
+  try{
+    var id=await syncRecordId(v);
+    var r=await fetch(SYNC_EP+'/api/collections/'+SYNC_COL+'/records/'+id, {cache:'no-store'});
+    if(r.ok){
+      var d=await r.json();
+      if(hasLocal){
+        var useCloud=await ui.confirm('这个同步码在云端已有一本账。用云端的覆盖本机,还是用本机的覆盖云端?','用云端的','用本机的');
+        if(useCloud){ var rs=await syncDecrypt(v,d.payload); var n=normalizeState(rs); if(n.ok){ syncRev=+d.rev||0; localStorage.setItem(SYNC_REV_KEY,String(syncRev)); applyRemoteState(n.state); setSyncStatus('已采用云端账本 · '+nowHM()); } }
+        else { syncRev=+d.rev||0; await pushSync(); }
+      } else { var rs2=await syncDecrypt(v,d.payload); var n2=normalizeState(rs2); if(n2.ok){ syncRev=+d.rev||0; localStorage.setItem(SYNC_REV_KEY,String(syncRev)); applyRemoteState(n2.state); setSyncStatus('已接入云端账本 · '+nowHM()); } }
+    } else { await pushSync(); }
+    if(ui&&ui.toast) ui.toast('同步已启用');
+  }catch(e){ setSyncStatus('启用时连接云端失败:'+(e.message||e)); if(ui&&ui.toast) ui.toast('已启用,但暂时连不上云端,稍后自动重试','warn2'); }
+}
+function disableSync(){ syncCode=''; localStorage.removeItem(SYNC_CODE_KEY); updateSyncChip(); setSyncStatus('未启用 —— 当前仅存本机'); if(ui&&ui.toast) ui.toast('已关闭同步(本机数据保留)'); }
+
 renderAll();
+
+updateSyncChip();
+if(syncCode){ setSyncStatus('正在连接云端…'); pullSync(); setInterval(function(){ pullSync({quiet:true}); }, 25000); }
+else setSyncStatus('未启用 —— 当前仅存本机');
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && syncCode) pullSync({quiet:true}); });
 </script>
 </body>
 </html>
