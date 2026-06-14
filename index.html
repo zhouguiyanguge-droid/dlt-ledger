@@ -24,8 +24,8 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);pa
 background:linear-gradient(160deg,#0b1026 0%,#1b1038 45%,#251038 70%,#0b1026 100%);background-attachment:fixed;min-height:100vh;}
 header{padding:38px 20px 26px;text-align:center;position:relative;overflow:hidden;}
 header::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(232,74,60,.35),transparent 60%),radial-gradient(ellipse at 80% 120%,rgba(91,154,255,.18),transparent 55%);pointer-events:none;}
-header h1{font-size:30px;letter-spacing:6px;background:linear-gradient(90deg,#f6c453,#ff8a6e,#f6c453);background-size:200%;
--webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 5s linear infinite;position:relative;}
+header h1{font-size:30px;letter-spacing:6px;background:linear-gradient(90deg,#f6c453,#ff8a6e,#f6c453);background-size:100%;
+-webkit-background-clip:text;background-clip:text;color:transparent;position:relative;}
 @keyframes shimmer{to{background-position:200% 0;}}
 header p{margin-top:8px;font-size:13px;color:var(--muted);position:relative;}
 main{max-width:880px;margin:0 auto;padding:16px;}
@@ -37,7 +37,7 @@ box-shadow:0 8px 24px rgba(0,0,0,.25);transition:.25s;}
 .card .l{font-size:12px;color:var(--muted);}
 .neg{color:var(--red)!important;} .pos{color:var(--green)!important;}
 section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;backdrop-filter:blur(8px);
-box-shadow:0 8px 24px rgba(0,0,0,.25);animation:fadeUp .5s ease both;}
+box-shadow:0 8px 24px rgba(0,0,0,.25);content-visibility:auto;contain-intrinsic-size:260px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 section h2{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#fff;}
 section h2::before{content:"";width:4px;height:16px;background:linear-gradient(var(--gold),var(--red));border-radius:2px;display:inline-block;}
@@ -102,7 +102,17 @@ box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s ease;max-width:88vw;}
 .toast.out{opacity:0;transition:.4s;}
 .cf{position:fixed;top:-14px;width:8px;height:14px;z-index:98;border-radius:2px;animation:fall 2.8s linear forwards;pointer-events:none;}
 @keyframes fall{to{transform:translateY(108vh) rotate(720deg);opacity:.15;}}
-@media(max-width:520px){.ball{width:27px;height:27px;font-size:12px;}header h1{font-size:24px;letter-spacing:3px;}}
+@media(prefers-reduced-motion:reduce){
+html{scroll-behavior:auto;}
+*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+}
+@media(max-width:520px){
+body{background-attachment:scroll;}
+nav,.tabbar,.card,section{backdrop-filter:none;}
+.card,section{box-shadow:0 5px 16px rgba(0,0,0,.22);}
+.ball{width:27px;height:27px;font-size:12px;}
+header h1{font-size:24px;letter-spacing:3px;}
+}
 
 /* ===== 原生 App 化：安全区 / 底部 Tab / 分页 / 启动屏 / 安装 ===== */
 body{padding-bottom:calc(76px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;overscroll-behavior-y:none;}
@@ -191,28 +201,28 @@ button,.tabbar,.card,.chip,.tag{-webkit-user-select:none;user-select:none;}
 <p class="hint">开奖号以中国体彩官网/官方App为准。一、二等奖为浮动奖金，会弹出输入框让你填官方实际金额（追加票一二等奖另有基本奖金80%的追加部分，填到手总额）。</p>
 </section>
 
-<section id="sec-his" data-tab="draw">
+<section id="sec-his" data-tab="draw" hidden data-defer-section>
 <h2>历史记录</h2>
 <div id="history"></div>
 </section>
 
-<section class="honest" id="sec-honest" data-tab="analyze">
+<section class="honest" id="sec-honest" data-tab="analyze" hidden data-defer-section>
 <h2>诚实概率面板（数学说了算）</h2>
 <div id="honest"></div>
 </section>
 
-<section id="sec-check" data-tab="analyze">
+<section id="sec-check" data-tab="analyze" hidden data-defer-section>
 <h2>号码热门度体检（平分风险）</h2>
 <div id="checkup"></div>
 <p class="hint">原理：任何组合中奖概率完全相同，但一、二等奖按中奖注数<b>平分奖池</b>。买的人越多的组合（生日号≤31、连号、等差…），中了大奖反而分得越少。此体检只针对"被平分风险"，与中奖概率无关。</p>
 </section>
 
-<section id="sec-luck" data-tab="analyze">
+<section id="sec-luck" data-tab="analyze" hidden data-defer-section>
 <h2>运气体检：理论 vs 实际</h2>
 <div id="luck"></div>
 </section>
 
-<section id="sec-sim" data-tab="analyze">
+<section id="sec-sim" data-tab="analyze" hidden data-defer-section>
 <h2>蒙特卡洛模拟器：把你的打法跑上万年</h2>
 <div class="row">
 <span class="hint">模拟</span>
@@ -230,7 +240,7 @@ button,.tabbar,.card,.chip,.tag{-webkit-user-select:none;user-select:none;}
 <div id="simOut"></div>
 </section>
 
-<section class="fun" id="sec-lab" data-tab="bets">
+<section class="fun" id="sec-lab" data-tab="bets" hidden data-defer-section>
 <h2>选号方法实验室 <span class="tag">四种方法概率完全相同 · 标签会记入每注依据</span></h2>
 <div class="row">
 <button style="background:linear-gradient(135deg,#a78bfa,#7c5fd4)" onclick="shakeGua()">周易摇卦</button>
@@ -260,7 +270,7 @@ button,.tabbar,.card,.chip,.tag{-webkit-user-select:none;user-select:none;}
 <div class="install-card" id="installArea"></div>
 </section>
 
-<section id="sec-photo" data-tab="me">
+<section id="sec-photo" data-tab="me" hidden data-defer-section>
 <h2>真实彩票存档</h2>
 <div class="row">
 <input type="text" id="phPeriod" placeholder="期号 如 26062" style="width:110px">
@@ -271,7 +281,7 @@ button,.tabbar,.card,.chip,.tag{-webkit-user-select:none;user-select:none;}
 <p class="hint">照片自动压缩存在本机浏览器中，随JSON备份导出导入，点缩略图放大。提示：本工具数据只在你电脑上，Claude看不到——想让我帮你识别票面、核对中奖、更新账本，直接把彩票拍照发到对话里。</p>
 </section>
 
-<section data-tab="me">
+<section data-tab="me" hidden data-defer-section>
 <h2>数据管理</h2>
 <div class="row">
 <button class="ghost" onclick="exportData()">导出备份 (JSON)</button>
@@ -699,6 +709,32 @@ function renderCheckup(){
 }
 
 /* ---------- 蒙特卡洛模拟器 ---------- */
+function normalSample(mean, sd){
+  const u1 = Math.max(Number.EPSILON, Math.random());
+  const u2 = Math.random();
+  return mean + Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2)*sd;
+}
+function samplePoisson(lambda){
+  if(lambda<=0) return 0;
+  if(lambda>30) return Math.max(0, Math.round(normalSample(lambda, Math.sqrt(lambda))));
+  const limit = Math.exp(-lambda);
+  let p = 1, k = 0;
+  do{ k++; p *= Math.random(); }while(p>limit);
+  return k-1;
+}
+function sampleBinomial(n,p){
+  if(p<=0) return 0;
+  if(p>=1) return n;
+  const mean = n*p;
+  if(n<=200000){
+    let c = 0;
+    for(let i=0;i<n;i++) if(Math.random()<p) c++;
+    return c;
+  }
+  if(mean<30) return Math.min(n, samplePoisson(mean));
+  const sd = Math.sqrt(n*p*(1-p));
+  return Math.max(0, Math.min(n, Math.round(normalSample(mean, sd))));
+}
 function runSim(){
   const years = Math.max(1, Math.min(50000, parseInt(document.getElementById('simYears').value,10)||10000));
   const t1 = Number(document.getElementById('simT1').value)||8000000;
@@ -713,11 +749,18 @@ function runSim(){
   const PRIZE = {1:t1, 2:t2, 3:10000, 4:3000, 5:300, 6:200, 7:100, 8:15, 9:5};
   const counts = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
   let totalWin = 0;
-  for(let i=0;i<trials;i++){
-    const u = Math.random();
-    if(u >= acc) continue;
-    for(let j=0;j<cum.length;j++){
-      if(u < cum[j][0]){ const t = cum[j][1]; counts[t]++; totalWin += PRIZE[t]; break; }
+  if(trials<=200000){
+    for(let i=0;i<trials;i++){
+      const u = Math.random();
+      if(u >= acc) continue;
+      for(let j=0;j<cum.length;j++){
+        if(u < cum[j][0]){ const t = cum[j][1]; counts[t]++; totalWin += PRIZE[t]; break; }
+      }
+    }
+  }else{
+    for(const t of tiers){
+      counts[t] = sampleBinomial(trials, probs[t]);
+      totalWin += counts[t] * PRIZE[t];
     }
   }
   const cost = trials*unit;
@@ -733,6 +776,7 @@ function runSim(){
   '<div class="simbox">模拟 <b>'+years.toLocaleString()+'</b> 年（'+trials.toLocaleString()+' 注）：总投入 <b>'+cost.toLocaleString()+
   '</b> 元，总回收 <b>'+totalWin.toLocaleString()+'</b> 元，净'+(net<0?'亏':'赚')+' <b>'+Math.abs(net).toLocaleString()+
   '</b> 元（回收率 '+(totalWin/cost*100).toFixed(1)+'%，平均每年'+(net<0?'亏':'赚')+' '+Math.abs(Math.round(net/years)).toLocaleString()+' 元）。<br>'+
+  (trials>200000?'大样本采用快速近似抽样，避免手机主线程长时间卡顿；小样本仍逐注随机模拟。<br>':'')+
   '一等奖共中 <b>'+counts[1]+'</b> 次 —— 按此打法，平均约每 <b>'+waitYears.toLocaleString()+'</b> 年才能期望中一次一等奖。'+
   (counts[1]===0&&years>=waitYears/3?' 这次连模拟器都没中，可见有多难。':'')+'</div>';
 }
@@ -918,10 +962,31 @@ async function clearAll(){
   ui.toast('已重置');
 }
 
+let secondaryRendered = false;
+let secondaryRenderTimer = null;
 function renderAll(){
-  renderBets(); renderHistory(); renderStats(); renderHonest();
-  renderBudget(); renderCheckup(); renderLuck(); renderPhotos();
+  renderBets(); renderStats();
+  renderBudget();
+  if(arguments[0]===true){
+    scheduleSecondaryRender();
+  }else{
+    renderSecondary();
+  }
   const sb = document.getElementById('simBets'); if(sb) sb.textContent = state.bets.length;
+}
+function renderSecondary(){
+  if(secondaryRenderTimer){ clearTimeout(secondaryRenderTimer); secondaryRenderTimer = null; }
+  document.querySelectorAll('[data-defer-section]').forEach(s=>s.hidden=false);
+  renderHistory(); renderHonest(); renderCheckup(); renderLuck(); renderPhotos();
+  secondaryRendered = true;
+}
+function scheduleSecondaryRender(){
+  secondaryRendered = false;
+  const run = ()=>{ if(!secondaryRendered){ renderSecondary(); const sb = document.getElementById('simBets'); if(sb) sb.textContent = state.bets.length; } };
+  const wake = ()=>run();
+  window.addEventListener('scroll', wake, {once:true, passive:true});
+  document.querySelectorAll('nav a,.tabbar .tab').forEach(a=>a.addEventListener('click', wake, {once:true}));
+  secondaryRenderTimer = setTimeout(run, 2200);
 }
 
 /* ---------- 联网：自动获取官方开奖（失败则手动录入） ---------- */
@@ -947,7 +1012,7 @@ async function fetchLatest(){
 }
 /* ---------- PWA：离线缓存 + 新版本提示 ---------- */
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
-  navigator.serviceWorker.register('./sw.js').then(function(reg){
+  const registerWorker = ()=>navigator.serviceWorker.register('./sw.js').then(function(reg){
     // 发现新版本（已激活旧 SW 的情况下）
     reg.addEventListener('updatefound', function(){
       const nw = reg.installing;
@@ -959,6 +1024,7 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
       });
     });
   }).catch(function(){});
+  setTimeout(registerWorker,2400);
 }
 /* ---------- 原生 App 化：分页 Tab / 启动屏 / 安装到主屏 ---------- */
 var SHARE_ICON = '<svg viewBox="0 0 24 24" width="17" height="17" style="stroke:#5b9aff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 15.5V3.5"/><path d="M8 7.5l4-4 4 4"/><path d="M5.5 12v7.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V12"/></svg>';
@@ -1133,7 +1199,7 @@ async function enableSync(){
 }
 function disableSync(){ syncCode=''; localStorage.removeItem(SYNC_CODE_KEY); updateSyncChip(); setSyncStatus('未启用 —— 当前仅存本机'); if(ui&&ui.toast) ui.toast('已关闭同步(本机数据保留)'); }
 
-renderAll();
+renderAll(true);
 
 updateSyncChip();
 if(syncCode){ setSyncStatus('正在连接云端…'); pullSync(); setInterval(function(){ pullSync({quiet:true}); }, 25000); }
